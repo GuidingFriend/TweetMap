@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/1.6/ref/settings/
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+PROJECT_PATH = BASE_DIR
 
 
 # Quick-start development settings - unsuitable for production
@@ -24,9 +25,9 @@ DEBUG = True
 
 TEMPLATE_DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
-
+ROOT_URLCONF = 'TweetMap.urls'
 # Application definition
 
 INSTALLED_APPS = (
@@ -37,6 +38,9 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'south',
+    'tweepy',
+    'twitter_service',
+    'sanitizer',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -47,11 +51,30 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
-
+TEMPLATE_CONTEXT_PROCESSORS = (
+'django.core.context_processors.debug',
+'django.core.context_processors.i18n',
+'django.core.context_processors.media',
+'django.core.context_processors.static',
+'django.contrib.auth.context_processors.auth',
+'django.contrib.messages.context_processors.messages',
+)
 ROOT_URLCONF = 'TweetMap.urls'
 
 WSGI_APPLICATION = 'TweetMap.wsgi.application'
 
+TEMPLATE_LOADERS = (
+    'django.template.loaders.filesystem.Loader',
+    'django.template.loaders.app_directories.Loader',
+)
+
+TEMPLATE_DIRS = (
+      os.path.join(os.path.dirname(__file__), 'templates/'),
+)
+STATICFILES_FINDERS = (
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+)
 
 # Database
 # https://docs.djangoproject.com/en/1.6/ref/settings/#databases
@@ -59,7 +82,7 @@ WSGI_APPLICATION = 'TweetMap.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'tweet_map',                      # Or path to database file if using sqlite3.
+        'NAME': 'twitter_map',                      # Or path to database file if using sqlite3.
         # The following settings are not used with sqlite3:
         'USER': 'root',
         'PASSWORD': 'root',
@@ -84,5 +107,23 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.6/howto/static-files/
-
+STATIC_ROOT = os.path.join(PROJECT_PATH, "dev")
 STATIC_URL = '/static/'
+STATICFILES_DIRS = (
+    os.path.join(os.path.join(PROJECT_PATH, "TweetMap"), "static"),
+)
+
+try:
+    from TweetMap.local_settings import *
+except ImportError:
+    try:
+        from mod_python import apache
+        apache.log_error( "local settings not available", apache.APLOG_NOTICE )
+    except ImportError:
+        import sys
+        sys.stderr.write( "local settings not available\n" )
+else:
+    try:
+        INSTALLED_APPS  += LOCAL_INSTALLED_APPS
+    except NameError:
+        pass
